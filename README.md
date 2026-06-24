@@ -42,6 +42,14 @@ By default, the player uses `Admin@123` as the password. For security, it is **h
    * Variable Name: `COOKIE_SECRET` | Type: Secret | Value: *A_Random_Secret_String* (e.g., `super-secret-key-998`)
 3. Click **Deploy**.
 
+### 4. Use Your Own Domain (Optional)
+Want to access the player using your custom domain (e.g., `tv.yourdomain.com`) instead of the default `.workers.dev` link? 
+1. Go to your Worker's page in the Cloudflare Dashboard.
+2. Navigate to the **Domains** tab, then click **Add Domain**.
+3. Under **Connect domain**, select the base domain you have already added to your Cloudflare account.
+4. Enter your desired subdomain (e.g., `tv`) or root domain (*Note: your domain's DNS must be managed by Cloudflare*).
+5. Click **Add domain** to save. Cloudflare will automatically configure the DNS records and SSL certificate for you!
+
 🎉 **You're done!** Open your Worker's URL, log in (the default password is `Admin@123` if you didn't change it), and start watching!
 
 ---
