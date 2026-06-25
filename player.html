@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOE IPTV Player - Dashboard</title>
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        :root {
+            --bg-main: #0c0e17;
+            --bg-surface: #161925;
+            --bg-input: #212636;
+            --text-main: #ffffff;
+            --text-muted: #8992a4;
+            --accent: #00adb5;
+            --accent-hover: #008f96;
+            --danger: #ff4d4d;
+            --danger-hover: #e03131;
+            --border-radius: 10px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+        .app-container { width: 100%; max-width: 1200px; margin: 0 auto; }
+        .top-navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--bg-input);
+        }
+        .top-navbar h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        @media (min-width: 900px) {
+            .dashboard-grid { grid-template-columns: 1.8fr 1.2fr; }
+        }
+        .panel-card {
+            background-color: var(--bg-surface);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+        .panel-card h3 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            border-left: 4px solid var(--accent);
+            padding-left: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .flex-row { display: flex; gap: 12px; margin-bottom: 16px; }
+        .flex-column { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: var(--bg-input);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--accent); }
+        button {
+            padding: 12px 24px;
+            background-color: var(--accent);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+        button:hover { background-color: var(--accent-hover); }
+        .btn-danger { background-color: var(--danger); }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+        .btn-mini { padding: 6px 14px; font-size: 12px; border-radius: 6px; }
+        .video-viewport {
+            background-color: #000000;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            width: 100%;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
+            margin-top: 12px;
+        }
+        video { width: 100%; height: 100%; object-fit: contain; }
+        .list-scroller {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+        .list-scroller::-webkit-scrollbar { width: 6px; }
+        .list-scroller::-webkit-scrollbar-thumb { background: var(--bg-input); border-radius: 3px; }
+        .row-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-input);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            gap: 12px;
+        }
+        .row-text { display: flex; flex-direction: column; overflow: hidden; }
+        .row-text strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .row-text span { color: var(--text-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px; }
+    </style>
+    <script>
+        // Real-time route security gate
+        if (localStorage.getItem("moe_player_auth") !== "true") {
+            window.location.href = "index.html";
+        }
+    </script>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="top-navbar">
+        <h2>📺 MOE IPTV Player</h2>
+        <button onclick="logoutSession()" class="btn-danger btn-mini">Log Out</button>
+    </div>
+    
+    <div class="dashboard-grid">
+        <!-- Playback Display Viewport -->
+        <div class="panel-card">
+            <h3>Media Monitor Feed</h3>
+            <div class="flex-row">
+                <input type="text" id="streamTarget" placeholder="Paste stream URL (e.g. http://91.146.94)">
+                <button onclick="triggerStreamLaunch()">Launch</button>
+            </div>
+            <div class="video-viewport">
+                <video id="mediaPlayer" controls autoplay></video>
+            </div>
+        </div>
+
+        <!-- Local M3U Link Library Datastore Manager -->
+        <div class="panel-card">
+            <h3>Library Datastore</h3>
+            <div class="flex-column">
+                <input type="text" id="m3uLabel" placeholder="Playlist Profile Name">
+                <input type="text" id="m3uLink" placeholder="Absolute Target M3U HTTP(S) URL">
+                <button onclick="commitNewSource()" style="width: 100%;">Append Record</button>
+            </div>
+            
+            <select id="playlistDropdown" onchange="playlistChangeAlert()">
+            </select>
+
+            <div id="recordListContainer" class="list-scroller">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const DEFAULT_M3U = "https://githubusercontent.com";
+    const mediaElement = document.getElementById('mediaPlayer');
+    let activeHlsEngine = null;
+
+    function logoutSession() {
+        localStorage.removeItem("moe_player_auth");
+        window.location.href = "index.html";
+    }
+
+    function triggerStreamLaunch() {
+        const urlString = document.getElementById('streamTarget').value.trim();
+        if (!urlString) return alert("Video address is required.");
+        initializeStreamFeed(urlString);
+    }
+
+    function initializeStreamFeed(streamUrl) {
+        if (activeHlsEngine) {
+            activeHlsEngine.destroy();
+            activeHlsEngine = null;
+        }
+
+        if (mediaElement.canPlayType('application/vnd.apple.mpegurl')) {
+            mediaElement.src = streamUrl;
+        } 
+        else if (Hls.isSupported()) {
+            activeHlsEngine = new Hls({ enableWorker: true, lowLatencyMode: true });
+            activeHlsEngine.loadSource(streamUrl);
+            activeHlsEngine.attachMedia(mediaElement);
+        } else {
+            alert("HLS playback is not supported on this browser profile.");
+        }
+    }
+
+    function fetchLocalRecords() {
+        const localBlob = localStorage.getItem('moe_iptv_sources');
+        if (!localBlob) {
+            const seedArr = [{ id: 'default', name: 'Default Setup Lineup', url: DEFAULT_M3U }];
+            localStorage.setItem('moe_iptv_sources', JSON.stringify(seedArr));
+            return seedArr;
+        }
+        return JSON.parse(localBlob);
+    }
+
+    function loadDatastoreProfiles() {
+        const datasets = fetchLocalRecords();
+        const dropSelection = document.getElementById('playlistDropdown');
+        const scrollList = document.getElementById('recordListContainer');
+        
+        dropSelection.innerHTML = '<option value="">-- Choose Target Playback Array --</option>';
+        scrollList.innerHTML = '';
+
+        datasets.forEach(record => {
+            const opt = document.createElement('option');
+            opt.value = record.url;
+            opt.textContent = record.name;
+            dropSelection.appendChild(opt);
+
+            const itemNode = document.createElement('div');
+            itemNode.className = 'row-item';
+            itemNode.innerHTML = `
+                <div class="row-text">
+                    <strong>${record.name}</strong>
+                    <span>${record.url}</span>
+                </div>
+                ${record.id !== 'default' ? `<button class="btn-danger btn-mini" onclick="purgeRecordId('${record.id}')">Remove</button>` : ''}
+            `;
+            scrollList.appendChild(itemNode);
+        });
+    }
+
+    function commitNewSource() {
+        const nameVal = document.getElementById('m3uLabel').value.trim();
+        const urlVal = document.getElementById('m3uLink').value.trim();
+        
+        if (!nameVal || !urlVal) return alert("Inputs cannot be empty.");
+
+        const currentRecords = fetchLocalRecords();
+        currentRecords.push({ id: 'src_' + Date.now(), name: nameVal, url: urlVal });
+        localStorage.setItem('moe_iptv_sources', JSON.stringify(currentRecords));
+        
+        document.getElementById('m3uLabel').value = '';
+        document.getElementById('m3uLink').value = '';
+        loadDatastoreProfiles();
+    }
+
+    function purgeRecordId(targetId) {
+        let actualRecords = fetchLocalRecords();
+        actualRecords = actualRecords.filter(item => item.id !== targetId);
+        localStorage.setItem('moe_iptv_sources', JSON.stringify(actualRecords));
+        loadDatastoreProfiles();
+    }
+
+  function playlistChangeAlert() {
+        const dropSelectElement = document.getElementById('playlistDropdown');
+        if (dropSelectElement.value) {
+            alert("Playlist updated destination string:\n" + dropSelectElement.value);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadDatastoreProfiles();
+    });
+</script>
+</body>
+</html>
