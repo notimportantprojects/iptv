@@ -79,9 +79,14 @@
 
     async function authenticateToken() {
         const inputString = document.getElementById('sysPassword').value;
+        if (!inputString) return alert("Please enter a password.");
+
         const stringBuffer = new TextEncoder().encode(inputString);
         const cryptoBuffer = await crypto.subtle.digest('SHA-256', stringBuffer);
-        const hexConversion = Array.from(new Uint8Array(cryptoBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        // Fixed Hexadecimal String Conversion Pipeline
+        const hashArray = Array.from(new Uint8Array(cryptoBuffer));
+        const hexConversion = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
         if (hexConversion === ENCRYPTED_ACCESS_SIGNATURE) {
             localStorage.setItem("moe_player_auth", "true");
