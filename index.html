@@ -74,8 +74,8 @@
 </div>
 
 <script>
-    // SHA-256 representation of password: "Admin@123"
-    const ENCRYPTED_ACCESS_SIGNATURE = "ca456e3b56461a29f8f2b740751a141b2f7a9f8b417e2c9efcf400fa6c888cf3";
+    // FIXED: Valid, correct SHA-256 string fingerprint representation of "Admin@123"
+    const ENCRYPTED_ACCESS_SIGNATURE = "e86f78a8a3caf0b60d8e74e5942aa6d86dc150cd3c03338aef25b7d2d7e3acc7";
 
     async function authenticateToken() {
         const inputString = document.getElementById('sysPassword').value;
@@ -84,7 +84,7 @@
         const stringBuffer = new TextEncoder().encode(inputString);
         const cryptoBuffer = await crypto.subtle.digest('SHA-256', stringBuffer);
         
-        // Fixed Hexadecimal String Conversion Pipeline
+        // Hexadecimal Conversion Sequence
         const hashArray = Array.from(new Uint8Array(cryptoBuffer));
         const hexConversion = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
