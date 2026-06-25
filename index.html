@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOE IPTV Player - Login</title>
+    <style>
+        :root {
+            --bg-main: #0c0e17;
+            --bg-surface: #161925;
+            --bg-input: #212636;
+            --text-main: #ffffff;
+            --text-muted: #8992a4;
+            --accent: #00adb5;
+            --accent-hover: #008f96;
+            --border-radius: 12px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .auth-card {
+            width: 100%;
+            max-width: 400px;
+            background-color: var(--bg-surface);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            text-align: center;
+        }
+        .auth-card h3 { font-size: 24px; margin-bottom: 12px; color: var(--accent); }
+        .auth-card p { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+        input {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--bg-input);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 14px;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+        }
+        input:focus { outline: none; border-color: var(--accent); }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--accent);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover { background-color: var(--accent-hover); }
+    </style>
+</head>
+<body>
+
+<div class="auth-card">
+    <h3>🔒 Protected Terminal</h3>
+    <p>Authentication required. Enter the system password to initialize your IPTV streaming environment.</p>
+    <input type="password" id="sysPassword" placeholder="Enter password" autofocus>
+    <button onclick="authenticateToken()">Unlock Player</button>
+</div>
+
+<script>
+    // SHA-256 representation of password: "Admin@123"
+    const ENCRYPTED_ACCESS_SIGNATURE = "ca456e3b56461a29f8f2b740751a141b2f7a9f8b417e2c9efcf400fa6c888cf3";
+
+    async function authenticateToken() {
+        const inputString = document.getElementById('sysPassword').value;
+        const stringBuffer = new TextEncoder().encode(inputString);
+        const cryptoBuffer = await crypto.subtle.digest('SHA-256', stringBuffer);
+        const hexConversion = Array.from(new Uint8Array(cryptoBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+        if (hexConversion === ENCRYPTED_ACCESS_SIGNATURE) {
+            localStorage.setItem("moe_player_auth", "true");
+            window.location.href = "player.html";
+        } else {
+            alert("Access Denied: Invalid security signature mapping.");
+            document.getElementById('sysPassword').value = '';
+        }
+    }
+
+    document.getElementById('sysPassword').addEventListener('keypress', function(ev) {
+        if (ev.key === 'Enter') authenticateToken();
+    });
+</script>
+</body>
+</html>
